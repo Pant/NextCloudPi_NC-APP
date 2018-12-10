@@ -12,17 +12,28 @@ var $ = MINI.$, $$ = MINI.$$, EE = MINI.EE;
 var selectedID = null;
 var lock       = false;
 
+// URL based navigation
+window.onpopstate = function(event) {
+  var ncp_app = location.search.split('=')[1];
+  if (ncp_app == 'config')
+    switch_to_section('nc-config');
+  else if (ncp_app == 'dashboard')
+    switch_to_section('dashboard');
+  else
+    app_clicked($('#' + ncp_app));
+};
+
 function errorMsg()
 { 
   $('#config-box').fill( "Something went wrong. Try refreshing the page" ); 
 }
 
-function switch_to_section( name )
+function switch_to_section(section)
 {
-  $( '#config-wrapper'    ).hide();
-  $( '#dashboard-wrapper' ).hide();
-  $( '#nc-config-wrapper' ).hide();
-  $( '#' + name + '-wrapper' ).show();
+  $( '#config-wrapper > div'    ).hide();
+  $( '#dashboard-wrapper'       ).hide();
+  $( '#nc-config-wrapper'       ).hide();
+  $( '#' + section + '-wrapper' ).show();
   $( '#' + selectedID ).set('-active');
   selectedID = null;
 }
@@ -81,27 +92,19 @@ function disable_slide_menu()
 function set_sidebar_click_handlers()
 {
   // Show selected option configuration box
-  $( 'li' , '#app-navigation' ).on('click', function(e)
+  $( 'ul' , '#app-navigation' ).on('click', function(e)
   {
     if ( selectedID == this.get( '.id' ) ) // already selected
       return;
 
     if ( lock ) return;
-    lock = true;
 
     if ( window.innerWidth <= 768 )
       close_menu();
 
     $( '#' + selectedID ).set('-active');
-    var that = this;
-    $.request('post', 'ncp-launcher.php', { action:'cfgreq', 
-                                            ref:this.get('.id') ,
-                                            csrf_token: $( '#csrf-token' ).get( '.value' ) }).then( 
-      function success( result ) 
-      {
-        cfgreqReceive( result, that );
-        lock = false;
-      }).error( errorMsg );
+    app_clicked(this);
+    history.pushState(null, selectedID, "?app=" + selectedID);
   });
 }
 
@@ -139,24 +142,17 @@ function reload_sidebar()
       }).error( errorMsg );
 }
 
-function cfgreqReceive( result, item )
+function app_clicked(item)
 {
-  var ret = $.parseJSON( result );
-  if ( ret.token )
-    $('#csrf-token').set( { value: ret.token } );
-
-  switch_to_section( 'config' );
+  $('.details-box').hide();
+  $('.circle-retstatus').hide();
+  $('#' + selectedID + '-config-box').hide();
+  switch_to_section('config');
   selectedID = item.get('.id');
-  item.set( '+active' );
-
-  $('#details-box'     ).hide();
-  $('#circle-retstatus').hide();
-  $('#config-box').ht( ret.output );
-  $('#config-box-title'    ).fill( $( '#' + selectedID + '-desc' ).get( '.value' ) ); 
-  $('#config-box-info-txt' ).fill( $( '#' + selectedID + '-info' ).get( '.value' ) ); 
-  $('#config-box-wrapper').show();
-  $('#config-extra-info').set( { $display: 'inline-block' } );
-  $('#config-extra-info').up().set( '@href', 'https://github.com/nextcloud/nextcloudpi/wiki/Configuration-Reference#' + selectedID );
+  item.set('+active');
+  $('#' + selectedID + '-config-box').show();
+  var baseURL = 'https://github.com/nextcloud/nextcloudpi/wiki/Configuration-Reference#';
+  $('#' + selectedID + '-config-box .icon-info').up().set( '@href', baseURL + selectedID );
 }
 
 $(function() 
@@ -174,28 +170,28 @@ $(function()
     {
       if ( e.origin != 'https://' + window.location.hostname + ':4443') 
       {
-        $('#details-box').fill( "Invalid origin" ); 
+        $('.details-box').fill( "Invalid origin" ); 
         return;
       }
 
-      var box = $$('#details-box');
-      $('#details-box').ht( box.innerHTML + e.data + '<br>' );
+      var box = $$('.details-box');
+      $('.details-box').ht( box.innerHTML + e.data + '<br>' );
       box.scrollTop = box.scrollHeight;
     }, false);
 
   set_sidebar_click_handlers();
 
   // Launch selected script
-  $( '#config-button' ).on('click', function(e)
+  $( '.config-button' ).on('click', function(e)
   {
     lock = true;
-    $('#details-box').hide( '' );
-    $('#config-button').set('@disabled',true);
-    $('#loading-gif').set( { $display: 'inline' } );
+    $('.details-box').hide( '' );
+    $('.config-button').set('@disabled',true);
+    $('.loading-gif').set( { $display: 'inline' } );
 
     // create configuration object
     var cfg = {};
-    $( 'input' , '#config-box' ).each( function(item){
+    $( 'input' , '#' + selectedID + '-config-box' ).each( function(item){
       if( item.getAttribute('type') == 'checkbox' )
         item.value = item.checked ? 'yes' : 'no';
 
@@ -215,11 +211,11 @@ $(function()
 
 
     // reset box
-    $('#details-box').fill();
-    $('#details-box').show();
-    $('#details-box').set( {$height: '0vh'} );
-    $('#details-box').animate( {$height: '50vh'}, 150 );
-    $('#circle-retstatus').hide();
+    $('.details-box').fill();
+    $('.details-box').show();
+    $('.details-box').set( {$height: '0vh'} );
+    $('.details-box').animate( {$height: '50vh'}, 150 );
+    $('.circle-retstatus').hide();
 
     $( 'input' , '#config-box-wrapper' ).set('@disabled',true);
 
@@ -227,7 +223,7 @@ $(function()
     $.request('post', 'ncp-launcher.php', { action:'launch', 
                                             ref   : selectedID,
                                             config: $.toJSON(cfg),
-                                            csrf_token: $( '#csrf-token' ).get( '.value' ) }).then( 
+                                            csrf_token: $( '#csrf-token' ).get( '.value' ) }).then(
       function success( result ) 
       {
         var ret = $.parseJSON( result );
@@ -240,17 +236,17 @@ $(function()
             if( ret.ref && ret.ref == 'nc-update' )
               window.location.reload( true );
             reload_sidebar();
-            $('#circle-retstatus').set( '+icon-green-circle' );
+            $('.circle-retstatus').set( '+icon-green-circle' );
           }
           else 
-            $('#circle-retstatus').set( '-icon-green-circle' );
-          $('#circle-retstatus').show();
+            $('.circle-retstatus').set( '-icon-green-circle' );
+          $('.circle-retstatus').show();
         }
         else                                     // print error from server instead
-          $('#details-box').fill(ret.output);
+          $('.details-box').fill(ret.output);
         $( 'input' , '#config-box-wrapper' ).set('@disabled', null);
-        $('#config-button').set('@disabled',null);
-        $('#loading-gif').hide();
+        $('.config-button').set('@disabled',null);
+        $('.loading-gif').hide();
         lock = false;
       }).error( errorMsg );
   });
@@ -263,19 +259,10 @@ $(function()
     
     $( '#' + selectedID ).set('-active');
 
-    // request
-    $.request('post', 'ncp-launcher.php', { action:'cfgreq', 
-                                            ref:'nc-update' ,
-                                            csrf_token: $( '#csrf-token' ).get( '.value' ) }).then( 
-      function success( result ) 
-      {
-        cfgreqReceive( result, $( '#nc-update' ) );
-        lock = false;
-      }
-      ).error( errorMsg );
+    app_clicked( $('#nc-update') );
 
     //clear details box
-    $('#details-box').hide( '' );
+    $('.details-box').hide( '' );
   } );
 
   // slide menu
@@ -314,9 +301,9 @@ $(function()
                                             csrf_token: $( '#csrf-token' ).get( '.value' ) }).then( 
       function success( result ) 
       {
-        $('#config-box-wrapper').hide();
+        switch_to_section( 'nc-config' );
         $.off( poweroff_event_handler );
-        $('#config-box-title').fill( "Shutting down..." ); 
+        $('#nc-config-wrapper').ht('<h2 class="text-title">Shutting down...<h2>');
       }).error( errorMsg );
   } );
 
@@ -329,9 +316,9 @@ $(function()
                                             csrf_token: $( '#csrf-token' ).get( '.value' ) }).then( 
       function success( result ) 
       {
-        $('#config-box-wrapper').hide();
+        switch_to_section( 'nc-config' );
         $.off( poweroff_event_handler );
-        $('#config-box-title').fill( "Rebooting..." ); 
+        $('#nc-config-wrapper').ht('<h2 class="text-title">Rebooting...<h2>');
       }).error( errorMsg );
   } );
 
@@ -361,6 +348,7 @@ $(function()
     if ( lock ) return;
     close_menu();
     switch_to_section( 'dashboard' );
+    history.pushState(null, selectedID, "?app=dashboard");
   } );
 
   // config button
@@ -369,6 +357,7 @@ $(function()
     if ( lock ) return;
     close_menu();
     switch_to_section( 'nc-config' );
+    history.pushState(null, selectedID, "?app=config");
   } );
 
   // language selection
