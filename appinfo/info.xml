@@ -2,7 +2,7 @@
 <info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>nextcloudpi</id>
-    <name>Next Cloud Pi</name>
+    <name>NextCloudPi</name>
     <summary>NextCloudPi webpanel integrated in a Nextcloud App</summary>
     <description><![CDATA[NextCloudPi webpanel integrated in a Nextcloud App.
 
@@ -18,7 +18,7 @@ This way you can tweak your NextCloudPi Configuration from inside the Nextcloud 
     </dependencies>
     <navigations>
         <navigation>
-            <name>Next Cloud Pi</name>
+            <name>NextCloudPi</name>
             <route>nextcloudpi.page.index</route>
         </navigation>
     </navigations>
