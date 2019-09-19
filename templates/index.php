@@ -3,6 +3,12 @@ script('nextcloudpi', 'script');
 style('nextcloudpi', 'style');
 ?>
 
+<?php 
+include './ncp-web/index.php'
+?>
+
+
+
 <div id="app">
 	<div id="app-navigation">
 		<?php print_unescaped($this->inc('navigation/index')); ?>
