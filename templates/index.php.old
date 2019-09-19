@@ -1,0 +1,6 @@
+<?php
+script('nextcloudpi', 'script');
+style('nextcloudpi', 'style');
+?>
+
+<?php print_unescaped($this->inc('ncp-web/index.php')); ?>
