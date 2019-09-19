@@ -1,0 +1,15 @@
+{
+    "name": "Next Cloud Pi",
+    "description": "NextCloudPi webpanel integrated in a Nextcloud App",
+    "type": "project",
+    "license": "AGPL",
+    "authors": [
+        {
+            "name": "Panteleimon Sarantos"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^5.4"
+    }
+}
