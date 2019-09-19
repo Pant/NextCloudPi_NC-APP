@@ -14,7 +14,7 @@ This way you can tweak your NextCloudPi Configuration from inside the Nextcloud 
     <category>tools</category>
     <bugs>https://github.com/Pant/NextCloudPi_NC-APP/issues</bugs>
     <dependencies>
-        <nextcloud min-version="15" max-version="15"/>
+        <nextcloud min-version="15" max-version="16"/>
     </dependencies>
     <navigations>
         <navigation>
